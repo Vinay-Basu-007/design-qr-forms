@@ -1,3 +1,35 @@
+function fallbackSubmitForm(payload, scriptUrl) {
+  // Create a hidden form and submit as application/x-www-form-urlencoded
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = scriptUrl;
+  form.style.display = 'none';
+  // target can be _self or _blank; _self navigates away (not desired). We submit to a hidden iframe to keep SPA behavior.
+  const iframeName = 'submit_iframe_' + Math.random().toString(36).slice(2);
+  const iframe = document.createElement('iframe');
+  iframe.name = iframeName;
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+  form.target = iframeName;
+
+  Object.keys(payload).forEach((key) => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = payload[key];
+    form.appendChild(input);
+  });
+
+  document.body.appendChild(form);
+  form.submit();
+
+  // Clean up after a short delay
+  setTimeout(() => {
+    document.body.removeChild(form);
+    document.body.removeChild(iframe);
+  }, 5000);
+}
+
 function getDesignNumberFromUrl() {
   const params = new URLSearchParams(window.location.search);
   return params.get("design") || params.get("id") || "";
@@ -90,7 +122,17 @@ function initForm() {
       designInput.value = designNumber;
       showMessage("Order submitted successfully. Thank you!", "success");
     } catch (error) {
-      showMessage(error.message || "Something went wrong. Please try again.", "error");
+      // If fetch failed (network/CORS), try a non-fetch fallback to post the form directly
+      console.warn("Fetch failed, falling back to form POST:", error);
+      try {
+        fallbackSubmitForm(payload, window.APP_CONFIG?.GOOGLE_SCRIPT_URL?.trim());
+        // Notify user we attempted fallback - actual confirmation will depend on sheet state
+        showMessage("Submitted via fallback (if the server accepted it). If this fails, please contact support.", "success");
+        form.reset();
+        designInput.value = designNumber;
+      } catch (err2) {
+        showMessage(error.message || "Something went wrong. Please try again.", "error");
+      }
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = "Submit Order";
