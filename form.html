@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Design Order Form</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <h1>Design Order Form</h1>
+        <p class="subtitle">Fill in your details below. The design number is linked to your QR code.</p>
+
+        <form id="order-form" novalidate>
+          <div class="field">
+            <label for="name" class="required">Name</label>
+            <input id="name" name="name" type="text" autocomplete="name" required />
+          </div>
+
+          <div class="field">
+            <label for="contact" class="required">Contact Number</label>
+            <input
+              id="contact"
+              name="contact"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="address">Address</label>
+            <textarea id="address" name="address" placeholder="Optional"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="quantity" class="required">Quantity</label>
+            <input id="quantity" name="quantity" type="number" min="1" step="1" required />
+          </div>
+
+          <div class="field">
+            <label for="designNumber">Design Number</label>
+            <input id="designNumber" name="designNumber" type="text" readonly required />
+            <p class="hint">Set automatically from the QR code and cannot be edited.</p>
+          </div>
+
+          <button type="submit" class="btn" id="submit-btn">Submit Order</button>
+        </form>
+
+        <div id="message" class="message" role="status"></div>
+      </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/form.js"></script>
+  </body>
+</html>

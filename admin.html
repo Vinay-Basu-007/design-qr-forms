@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QR Code Admin</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <nav class="nav">
+        <a href="index.html">Home</a>
+      </nav>
+
+      <div class="card">
+        <h1>QR Code Generator</h1>
+        <p class="subtitle">
+          Create QR codes with unique design numbers. Scanning opens the order form with the design
+          number locked in.
+        </p>
+
+        <div class="field">
+          <label for="baseUrl">Public site URL</label>
+          <input id="baseUrl" type="url" placeholder="https://your-site.com" />
+          <p class="hint">Used in QR links. Defaults to this site’s URL when hosted.</p>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="singleDesign">Single design number</label>
+            <input id="singleDesign" type="text" placeholder="e.g. DSN-1001" />
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button type="button" class="btn" id="generate-single">Generate QR</button>
+          </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0" />
+
+        <div class="row">
+          <div class="field">
+            <label for="batchPrefix">Batch prefix</label>
+            <input id="batchPrefix" type="text" value="DSN-" />
+          </div>
+          <div class="field">
+            <label for="batchCount">How many</label>
+            <input id="batchCount" type="number" min="1" max="50" value="5" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="batchStart">Starting number</label>
+          <input id="batchStart" type="number" min="1" value="1001" />
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="generate-batch">Generate batch</button>
+
+        <div id="qr-grid" class="qr-grid"></div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/admin.js"></script>
+  </body>
+</html>
