@@ -25,8 +25,8 @@ function fallbackSubmitForm(payload, scriptUrl) {
 
   // Clean up after a short delay
   setTimeout(() => {
-    document.body.removeChild(form);
-    document.body.removeChild(iframe);
+    if (form.parentNode) document.body.removeChild(form);
+    if (iframe.parentNode) document.body.removeChild(iframe);
   }, 5000);
 }
 
@@ -44,6 +44,19 @@ function showMessage(text, type) {
 function validateContact(value) {
   const digits = value.replace(/\D/g, "");
   return digits.length >= 10;
+}
+
+// Compute total from size inputs and return sizes object
+function computeTotalQuantity() {
+  const s = Number(document.getElementById('sizeS')?.value || 0);
+  const m = Number(document.getElementById('sizeM')?.value || 0);
+  const l = Number(document.getElementById('sizeL')?.value || 0);
+  const xl = Number(document.getElementById('sizeXL')?.value || 0);
+  const xxl = Number(document.getElementById('sizeXXL')?.value || 0);
+  const total = s + m + l + xl + xxl;
+  const quantityInput = document.getElementById('quantity');
+  if (quantityInput) quantityInput.value = total;
+  return { total, sizes: { s, m, l, xl, xxl } };
 }
 
 async function submitToGoogleSheets(payload) {
@@ -80,23 +93,42 @@ function initForm() {
 
   if (!designNumber) {
     showMessage("Invalid QR code: design number is missing.", "error");
-    submitBtn.disabled = true;
-    designInput.value = "";
+    if (submitBtn) submitBtn.disabled = true;
+    if (designInput) designInput.value = "";
     return;
   }
 
-  designInput.value = designNumber;
+  if (designInput) designInput.value = designNumber;
+
+  // Ensure billingAddress and gst are marked required in UI
+  const billingAddressEl = document.getElementById('billingAddress');
+  const gstEl = document.getElementById('gst');
+  if (billingAddressEl) billingAddressEl.setAttribute('required', 'true');
+  if (gstEl) gstEl.setAttribute('required', 'true');
+
+  // attach listeners to update total in real time
+  ['sizeS','sizeM','sizeL','sizeXL','sizeXXL'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', computeTotalQuantity);
+  });
+  // initialize quantity from sizes
+  computeTotalQuantity();
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const name = document.getElementById("name").value.trim();
-    const contact = document.getElementById("contact").value.trim();
-    const address = document.getElementById("address").value.trim();
-    const quantity = document.getElementById("quantity").value.trim();
+    const billingName = document.getElementById("billingName")?.value.trim() || "";
+    const contact = document.getElementById("contact")?.value.trim() || "";
+    const billingAddress = document.getElementById("billingAddress")?.value.trim() || "";
+    const gst = document.getElementById("gst")?.value.trim() || "";
+    const orderNumber = document.getElementById("orderNumber")?.value.trim() || "";
 
-    if (!name || !contact || !quantity) {
-      showMessage("Please fill in all required fields.", "error");
+    const { total, sizes } = computeTotalQuantity();
+    const quantity = total;
+
+    // Validate required fields: billingName, contact, billingAddress, gst, quantity > 0
+    if (!billingName || !contact || !billingAddress || !gst || quantity <= 0) {
+      showMessage("Please fill in all required fields and enter at least one size quantity.", "error");
       return;
     }
 
@@ -106,11 +138,18 @@ function initForm() {
     }
 
     const payload = {
-      name,
+      billingName,
       contact,
-      address,
-      quantity,
+      billingAddress,
+      gst,
+      orderNumber,
       designNumber,
+      quantity, // total quantity
+      sizeS: sizes.s,
+      sizeM: sizes.m,
+      sizeL: sizes.l,
+      sizeXL: sizes.xl,
+      sizeXXL: sizes.xxl,
     };
 
     submitBtn.disabled = true;
@@ -119,7 +158,9 @@ function initForm() {
     try {
       await submitToGoogleSheets(payload);
       form.reset();
-      designInput.value = designNumber;
+      if (designInput) designInput.value = designNumber;
+      // re-initialize quantity to zeroed sizes
+      computeTotalQuantity();
       showMessage("Order submitted successfully. Thank you!", "success");
     } catch (error) {
       // If fetch failed (network/CORS), try a non-fetch fallback to post the form directly
@@ -129,7 +170,8 @@ function initForm() {
         // Notify user we attempted fallback - actual confirmation will depend on sheet state
         showMessage("Submitted via fallback (if the server accepted it). If this fails, please contact support.", "success");
         form.reset();
-        designInput.value = designNumber;
+        if (designInput) designInput.value = designNumber;
+        computeTotalQuantity();
       } catch (err2) {
         showMessage(error.message || "Something went wrong. Please try again.", "error");
       }
