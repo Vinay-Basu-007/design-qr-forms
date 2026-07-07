@@ -60,7 +60,40 @@
       </div>
     </div>
 
+    <!-- Load QR library from CDN with a robust fallback sequence (alternate CDNs, then local copy) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+    <script>
+      (function ensureQrLib() {
+        if (typeof window.QRCode !== "undefined") return;
+        console.warn("qrcode CDN not loaded yet; attempting fallbacks...");
+        var tried = [
+          "https://unpkg.com/qrcode@1.5.4/build/qrcode.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js",
+          "js/vendor/qrcode.min.js"
+        ];
+        function tryLoad(index) {
+          if (index >= tried.length) {
+            console.error("Failed to load qrcode library from CDN and local fallback.");
+            return;
+          }
+          var s = document.createElement("script");
+          s.src = tried[index];
+          s.onload = function () {
+            if (typeof window.QRCode !== "undefined") {
+              console.info("qrcode loaded from", tried[index]);
+            } else {
+              tryLoad(index + 1);
+            }
+          };
+          s.onerror = function () {
+            tryLoad(index + 1);
+          };
+          document.head.appendChild(s);
+        }
+        tryLoad(0);
+      })();
+    </script>
+
     <script src="js/config.js"></script>
     <script src="js/admin.js"></script>
   </body>
