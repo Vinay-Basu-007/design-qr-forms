@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "browserify": "^17.0.1",
+    "terser": "^5.48.0"
+  }
+}
