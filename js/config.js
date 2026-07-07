@@ -1,12 +1,5 @@
-function detectBaseUrl() {
-  const { origin, pathname } = window.location;
-  const directory = pathname.replace(/\/[^/]*\.html$/, "").replace(/\/$/, "");
-  return origin + directory;
-}
-
 // Set GOOGLE_SCRIPT_URL after deploying google-apps-script/Code.gs
 window.APP_CONFIG = {
-  GOOGLE_SCRIPT_URL: "",
-  // Auto-detects GitHub Pages paths like /repo-name/form.html
-  BASE_URL: detectBaseUrl(),
+  GOOGLE_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwGLZaubkaN-YQjWHPpcYx_5pKt7iNJJo8ORl5bPl4G4XFEr3sC7YMm3UCz71WkpLrw/exec",
+  BASE_URL: window.location.origin,
 };
