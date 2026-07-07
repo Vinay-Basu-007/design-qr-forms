@@ -12,22 +12,54 @@ function fallbackSubmitForm(payload, scriptUrl) {
   document.body.appendChild(iframe);
   form.target = iframeName;
 
+  // Attach onload/onerror handlers to provide user feedback when fallback completes
+  iframe.onload = function () {
+    try {
+      showMessage('Order submitted (form POST). If it does not appear in the sheet shortly, check the server logs.', 'success');
+    } catch (e) {
+      console.log('Fallback submission completed.');
+    }
+    // cleanup
+    setTimeout(() => {
+      if (form.parentNode) document.body.removeChild(form);
+      if (iframe.parentNode) document.body.removeChild(iframe);
+    }, 1500);
+  };
+  iframe.onerror = function () {
+    try {
+      showMessage('Fallback submission failed. Please try again or contact support.', 'error');
+    } catch (e) {
+      console.warn('Fallback iframe error');
+    }
+    setTimeout(() => {
+      if (form.parentNode) document.body.removeChild(form);
+      if (iframe.parentNode) document.body.removeChild(iframe);
+    }, 1500);
+  };
+
   Object.keys(payload).forEach((key) => {
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = key;
-    input.value = payload[key];
+    input.value = payload[key] == null ? '' : String(payload[key]);
     form.appendChild(input);
   });
+
+  // Add a marker so server logs can tell it was a form POST from the client
+  const marker = document.createElement('input');
+  marker.type = 'hidden';
+  marker.name = 'submitted_via';
+  marker.value = 'form_post';
+  form.appendChild(marker);
 
   document.body.appendChild(form);
   form.submit();
 
-  // Clean up after a short delay
+  // If onload/onerror do not fire, still clean up after a delay
   setTimeout(() => {
     if (form.parentNode) document.body.removeChild(form);
     if (iframe.parentNode) document.body.removeChild(iframe);
-  }, 5000);
+  }, 10000);
 }
 
 function getDesignNumberFromUrl() {
@@ -71,6 +103,7 @@ async function submitToGoogleSheets(payload) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
+    // Keep credentials omitted to avoid sending cookies
   });
 
   if (!response.ok) {
@@ -120,9 +153,14 @@ function initForm() {
       const cleaned = (e.target.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
       e.target.value = cleaned;
     });
+    gstEl.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const pasted = (e.clipboardData.getData('text') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      gstEl.value = pasted.slice(0, 15);
+    });
   }
 
-  form.addEventListener("submit", async (event) => {
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
 
     const billingName = document.getElementById("billingName")?.value.trim() || "";
@@ -170,26 +208,15 @@ function initForm() {
     submitBtn.disabled = true;
     submitBtn.textContent = "Submitting...";
 
+    // Use form POST fallback as primary submission method to avoid CORS issues
     try {
-      await submitToGoogleSheets(payload);
+      fallbackSubmitForm(payload, window.APP_CONFIG?.GOOGLE_SCRIPT_URL?.trim());
       form.reset();
       if (designInput) designInput.value = designNumber;
       // re-initialize quantity to zeroed sizes
       computeTotalQuantity();
-      showMessage("Order submitted successfully. Thank you!", "success");
-    } catch (error) {
-      // If fetch failed (network/CORS), try a non-fetch fallback to post the form directly
-      console.warn("Fetch failed, falling back to form POST:", error);
-      try {
-        fallbackSubmitForm(payload, window.APP_CONFIG?.GOOGLE_SCRIPT_URL?.trim());
-        // Notify user we attempted fallback - actual confirmation will depend on sheet state
-        showMessage("Submitted via fallback (if the server accepted it). If this fails, please contact support.", "success");
-        form.reset();
-        if (designInput) designInput.value = designNumber;
-        computeTotalQuantity();
-      } catch (err2) {
-        showMessage(error.message || "Something went wrong. Please try again.", "error");
-      }
+    } catch (err) {
+      showMessage("Submission failed: " + (err.message || err), "error");
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = "Submit Order";
