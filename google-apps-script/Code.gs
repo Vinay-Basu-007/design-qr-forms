@@ -1,4 +1,3 @@
-// google-apps-script/Code.gs — safe, accepts JSON body OR form-encoded parameters
 const SHEET_NAME = "Orders";
 
 function getSheet_() {
@@ -16,24 +15,22 @@ function jsonResponse_(payload) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function doGet() {
-  return jsonResponse_({ ok: true, message: "Design QR Forms endpoint is running." });
+function doGet(e) {
+  return jsonResponse_({ ok: true, message: "Endpoint running" });
 }
 
 function doPost(e) {
   try {
-    // Try JSON body first
     let data = {};
+    // Try to parse JSON body (fetch with application/json)
     if (e.postData && e.postData.contents) {
       try {
         data = JSON.parse(e.postData.contents);
       } catch (err) {
-        // not JSON, fall through to read e.parameter
         data = {};
       }
     }
-
-    // Merge in form parameters if present (works for HTML form POST)
+    // Merge form parameters if present (HTML form POST or form-encoded fetch)
     data.name = (data.name || e.parameter?.name || "").toString().trim();
     data.contact = (data.contact || e.parameter?.contact || "").toString().trim();
     data.address = (data.address || e.parameter?.address || "").toString().trim();
@@ -41,7 +38,7 @@ function doPost(e) {
     data.designNumber = (data.designNumber || e.parameter?.designNumber || "").toString().trim();
 
     if (!data.name || !data.contact || !data.quantity || !data.designNumber) {
-      return jsonResponse_({ success: false, error: "Required fields are missing." });
+      return jsonResponse_({ success: false, error: "Required fields missing." });
     }
 
     const sheet = getSheet_();
