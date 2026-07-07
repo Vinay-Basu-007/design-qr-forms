@@ -1,6 +1,11 @@
+// js/admin.js (replace current contents with the following or apply these changes)
+
+// Ensure we init only after DOM is ready
+document.addEventListener('DOMContentLoaded', initAdmin);
+
 function getBaseUrl() {
   const input = document.getElementById("baseUrl");
-  const value = input.value.trim();
+  const value = input ? input.value.trim() : "";
   return value || window.APP_CONFIG?.BASE_URL || window.location.origin;
 }
 
@@ -28,21 +33,46 @@ function createQrCard(designNumber, url) {
   item.appendChild(label);
   item.appendChild(downloadBtn);
 
-  QRCode.toCanvas(canvas, url, { width: 180, margin: 1 }, (error) => {
-    if (error) {
-      label.textContent = `${designNumber} (failed to render)`;
-      downloadBtn.disabled = true;
-    }
-  });
+  // Guard: make sure library exists
+  if (typeof window.QRCode === "undefined") {
+    console.error("QRCode library is not available. Check CDN or network.");
+    label.textContent = `${designNumber} (QR lib missing)`;
+    downloadBtn.disabled = true;
+    return item;
+  }
+
+  try {
+    QRCode.toCanvas(canvas, url, { width: 180, margin: 1 }, (error) => {
+      if (error) {
+        console.error("toCanvas error for", designNumber, error);
+        label.textContent = `${designNumber} (failed to render)`;
+        downloadBtn.disabled = true;
+      }
+    });
+  } catch (err) {
+    console.error("Unexpected error generating QR to canvas:", err);
+    label.textContent = `${designNumber} (error)`;
+    downloadBtn.disabled = true;
+  }
 
   downloadBtn.addEventListener("click", () => {
-    QRCode.toDataURL(url, { width: 512, margin: 1 }, (err, dataUrl) => {
-      if (err) return;
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = `${designNumber}.png`;
-      link.click();
-    });
+    try {
+      QRCode.toDataURL(url, { width: 512, margin: 1 }, (err, dataUrl) => {
+        if (err) {
+          console.error("toDataURL error:", err);
+          return;
+        }
+        // create link in DOM for better cross-browser behavior
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = `${designNumber}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    } catch (err) {
+      console.error("Download error:", err);
+    }
   });
 
   return item;
@@ -50,8 +80,11 @@ function createQrCard(designNumber, url) {
 
 function renderQrCodes(designNumbers) {
   const grid = document.getElementById("qr-grid");
+  if (!grid) {
+    console.error("No #qr-grid element found in DOM.");
+    return;
+  }
   grid.innerHTML = "";
-
   designNumbers.forEach((designNumber) => {
     const url = buildFormUrl(designNumber);
     grid.appendChild(createQrCard(designNumber, url));
@@ -87,9 +120,20 @@ function generateBatch() {
 }
 
 function initAdmin() {
-  document.getElementById("baseUrl").value = window.APP_CONFIG?.BASE_URL || window.location.origin;
-  document.getElementById("generate-single").addEventListener("click", generateSingle);
-  document.getElementById("generate-batch").addEventListener("click", generateBatch);
-}
+  // quick check that QR lib loaded; show clear message if missing
+  if (typeof window.QRCode === "undefined") {
+    console.warn("QRCode library not found at init. The CDN may be blocked.");
+    // still set up UI so user can see an actionable message
+  }
 
-initAdmin();
+  const baseUrlEl = document.getElementById("baseUrl");
+  if (baseUrlEl) {
+    baseUrlEl.value = window.APP_CONFIG?.BASE_URL || window.location.origin;
+  }
+
+  const singleBtn = document.getElementById("generate-single");
+  if (singleBtn) singleBtn.addEventListener("click", generateSingle);
+
+  const batchBtn = document.getElementById("generate-batch");
+  if (batchBtn) batchBtn.addEventListener("click", generateBatch);
+}
