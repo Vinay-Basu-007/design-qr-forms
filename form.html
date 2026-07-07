@@ -14,8 +14,8 @@
 
         <form id="order-form" novalidate>
           <div class="field">
-            <label for="name" class="required">Name</label>
-            <input id="name" name="name" type="text" autocomplete="name" required />
+            <label for="name" class="required">Billing Name</label>
+            <input id="billingName" name="billingName" type="text" autocomplete="name" required />
           </div>
 
           <div class="field">
@@ -31,13 +31,43 @@
           </div>
 
           <div class="field">
-            <label for="address">Address</label>
-            <textarea id="address" name="address" placeholder="Optional"></textarea>
+            <label for="billingAddress">Billing Address</label>
+            <textarea id="billingAddress" name="billingAddress" placeholder="Optional"></textarea>
           </div>
 
           <div class="field">
-            <label for="quantity" class="required">Quantity</label>
-            <input id="quantity" name="quantity" type="number" min="1" step="1" required />
+            <label for="gst">GST No.</label>
+            <input id="gst" name="gst" type="text" placeholder="Optional" />
+          </div>
+
+          <div class="field">
+            <label for="orderNumber">Order Number</label>
+            <input id="orderNumber" name="orderNumber" type="text" placeholder="Optional" />
+          </div>
+
+          <fieldset class="sizes">
+            <legend>Sizes (enter counts)</legend>
+            <div class="size-row">
+              <label for="sizeS">S (36)</label>
+              <input id="sizeS" name="sizeS" type="number" min="0" value="0" />
+
+              <label for="sizeM">M (38)</label>
+              <input id="sizeM" name="sizeM" type="number" min="0" value="0" />
+
+              <label for="sizeL">L (40)</label>
+              <input id="sizeL" name="sizeL" type="number" min="0" value="0" />
+
+              <label for="sizeXL">XL (42)</label>
+              <input id="sizeXL" name="sizeXL" type="number" min="0" value="0" />
+
+              <label for="sizeXXL">XXL (44)</label>
+              <input id="sizeXXL" name="sizeXXL" type="number" min="0" value="0" />
+            </div>
+          </fieldset>
+
+          <div class="field">
+            <label for="quantity" class="required">Quantity (Total)</label>
+            <input id="quantity" name="quantity" type="number" readonly value="0" />
           </div>
 
           <div class="field">
