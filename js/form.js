@@ -91,6 +91,14 @@ function initForm() {
   const form = document.getElementById("order-form");
   const submitBtn = document.getElementById("submit-btn");
 
+  // Attach size listeners early so total updates even if other logic returns early
+  ['sizeS','sizeM','sizeL','sizeXL','sizeXXL'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', computeTotalQuantity);
+  });
+  // initialize quantity from sizes
+  computeTotalQuantity();
+
   if (!designNumber) {
     showMessage("Invalid QR code: design number is missing.", "error");
     if (submitBtn) submitBtn.disabled = true;
@@ -106,13 +114,13 @@ function initForm() {
   if (billingAddressEl) billingAddressEl.setAttribute('required', 'true');
   if (gstEl) gstEl.setAttribute('required', 'true');
 
-  // attach listeners to update total in real time
-  ['sizeS','sizeM','sizeL','sizeXL','sizeXXL'].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', computeTotalQuantity);
-  });
-  // initialize quantity from sizes
-  computeTotalQuantity();
+  // Enforce GST input to uppercase alphanumerics only as the user types
+  if (gstEl) {
+    gstEl.addEventListener('input', (e) => {
+      const cleaned = (e.target.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      e.target.value = cleaned;
+    });
+  }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -134,6 +142,13 @@ function initForm() {
 
     if (!validateContact(contact)) {
       showMessage("Please enter a valid contact number (at least 10 digits).", "error");
+      return;
+    }
+
+    // GST must be uppercase letters and numbers only
+    const gstPattern = /^[A-Z0-9]+$/;
+    if (!gstPattern.test(gst)) {
+      showMessage("GST must contain only uppercase letters and digits (A–Z, 0–9).", "error");
       return;
     }
 
