@@ -14,12 +14,12 @@
 
         <form id="order-form" novalidate>
           <div class="field">
-            <label for="name" class="required">Billing Name</label>
+            <label for="billingName" class="required">Billing Name <span class="asterisk">*</span></label>
             <input id="billingName" name="billingName" type="text" autocomplete="name" required />
           </div>
 
           <div class="field">
-            <label for="contact" class="required">Contact Number</label>
+            <label for="contact" class="required">Contact Number <span class="asterisk">*</span></label>
             <input
               id="contact"
               name="contact"
@@ -31,13 +31,13 @@
           </div>
 
           <div class="field">
-            <label for="billingAddress">Billing Address</label>
-            <textarea id="billingAddress" name="billingAddress" placeholder="Optional"></textarea>
+            <label for="billingAddress" class="required">Billing Address <span class="asterisk">*</span></label>
+            <textarea id="billingAddress" name="billingAddress" required></textarea>
           </div>
 
           <div class="field">
-            <label for="gst">GST No.</label>
-            <input id="gst" name="gst" type="text" placeholder="Optional" />
+            <label for="gst" class="required">GST No. <span class="asterisk">*</span></label>
+            <input id="gst" name="gst" type="text" required />
           </div>
 
           <div class="field">
@@ -66,8 +66,8 @@
           </fieldset>
 
           <div class="field">
-            <label for="quantity" class="required">Quantity (Total)</label>
-            <input id="quantity" name="quantity" type="number" readonly value="0" />
+            <label for="quantity" class="required">Quantity (Total) <span class="asterisk">*</span></label>
+            <input id="quantity" name="quantity" type="number" readonly value="0" required />
           </div>
 
           <div class="field">
